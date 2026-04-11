@@ -62,7 +62,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = "essential-company-app";
 // NÚMERO DO WHATSAPP DA LOJA
-const WHATSAPP_NUMBER = "5541984749711";
+const WHATSAPP_NUMBER = "5541936182744";
 
 // CATEGORIAS DISPONÍVEIS
 const SUBCATEGORIES = ["Retrô", "Europeu", "Brasileiro", "Seleção", "Promoção"];

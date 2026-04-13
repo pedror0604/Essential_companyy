@@ -1354,7 +1354,7 @@ function App() {
       unsubscribeBanners();
       unsubscribeTransactions();
     };
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (banners.length <= 1 || currentView !== "store") return;

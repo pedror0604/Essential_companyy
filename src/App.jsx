@@ -1590,7 +1590,12 @@ function App() {
               )}
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-12 h-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 font-bold animate-pulse">Carregando o catálogo premium...</p>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                 {filteredProducts.map((product) => (
                   <StoreProductCard

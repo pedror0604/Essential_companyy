@@ -1217,7 +1217,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
     setIsLoading(true);
 
     const productsRef = collection(

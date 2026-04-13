@@ -166,10 +166,21 @@ const StoreProductCard = ({
   showAlert,
 }) => {
   const [wantsPersonalization, setWantsPersonalization] = useState(false);
-  const [selectedSize, setSelectedSize] = useState("M");
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
+  // NOVO: Lógica inteligente de múltiplos tamanhos
+  const availableSizes = product.sizes
+    ? Object.entries(product.sizes).filter(([sz, qty]) => qty > 0).map(([sz]) => sz)
+    : (product.stock > 0 ? [product.size] : []);
+
   const isEsgotado = product.type === "pronta_entrega" && product.stock <= 0;
+
+  const [selectedSize, setSelectedSize] = useState(() => {
+    if (product.type === "encomenda") return "M";
+    if (product.type === "pronta_entrega" && availableSizes.length === 1) return availableSizes[0];
+    return "";
+  });
+
   const images = getProductImages(product);
 
   const nextImage = (e) => {
@@ -197,29 +208,13 @@ const StoreProductCard = ({
                 isEsgotado ? "grayscale opacity-60" : ""
               }`}
             />
-            {/* Controles do Carrossel */}
             {images.length > 1 && (
               <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"
-                >
-                  <ChevronRight size={20} />
-                </button>
+                <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"><ChevronLeft size={20} /></button>
+                <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"><ChevronRight size={20} /></button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
                   {images.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        idx === currentImageIdx ? "bg-white w-3" : "bg-white/50"
-                      }`}
-                    />
+                    <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIdx ? "bg-white w-3" : "bg-white/50"}`} />
                   ))}
                 </div>
               </>
@@ -228,16 +223,8 @@ const StoreProductCard = ({
         ) : (
           <Shirt size={60} className="text-gray-300" />
         )}
-
-        {/* Tags Sobre a Imagem */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-          <span
-            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm text-white w-max ${
-              product.type === "encomenda"
-                ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                : "bg-gradient-to-r from-green-500 to-emerald-500"
-            }`}
-          >
+          <span className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm text-white w-max ${product.type === "encomenda" ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-green-500 to-emerald-500"}`}>
             {product.type === "encomenda" ? "Encomenda" : "Pronta Entrega"}
           </span>
           {isEsgotado && (
@@ -246,13 +233,6 @@ const StoreProductCard = ({
             </span>
           )}
         </div>
-        {product.subCategory && (
-          <div className="absolute bottom-3 right-3 z-10">
-            <span className="bg-[#05071a]/80 text-white backdrop-blur-md px-2 py-1 text-[9px] font-black uppercase tracking-wider rounded border border-white/20">
-              {product.subCategory}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Conteúdo do Cartão */}
@@ -263,7 +243,7 @@ const StoreProductCard = ({
           </h3>
           {product.type === "pronta_entrega" && (
             <span className="bg-gray-50 border border-gray-200 text-gray-800 text-sm font-black px-3 py-1 rounded-lg shadow-sm flex-shrink-0">
-              {product.size}
+              {availableSizes.length > 1 ? "Vários" : product.size}
             </span>
           )}
         </div>
@@ -276,17 +256,12 @@ const StoreProductCard = ({
             {formatCurrency(product.price)}
           </p>
 
+          {/* Tamanhos Sob Encomenda */}
           {product.type === "encomenda" && (
             <div className="space-y-4 mb-5">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  Escolha o Tamanho
-                </label>
-                <select
-                  value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner"
-                >
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Escolha o Tamanho</label>
+                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner">
                   <option value="P">Tamanho P</option>
                   <option value="M">Tamanho M</option>
                   <option value="G">Tamanho G</option>
@@ -298,50 +273,58 @@ const StoreProductCard = ({
               <div className="bg-amber-50 border border-amber-100 p-3 sm:p-4 rounded-xl transition-all hover:bg-amber-100/50">
                 <label className="flex items-start gap-3 cursor-pointer group/label">
                   <div className="relative flex items-center justify-center mt-0.5">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={wantsPersonalization}
-                      onChange={(e) =>
-                        setWantsPersonalization(e.target.checked)
-                      }
-                    />
+                    <input type="checkbox" className="peer sr-only" checked={wantsPersonalization} onChange={(e) => setWantsPersonalization(e.target.checked)} />
                     <div className="w-5 h-5 rounded bg-white border-2 border-amber-300 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center shadow-sm">
-                      <Check
-                        size={14}
-                        className="text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                        strokeWidth={3}
-                      />
+                      <Check size={14} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">
-                      Quero personalizar
-                    </span>
-                    <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1">
-                      <Info size={12} /> Valores no WhatsApp
-                    </span>
+                    <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">Quero personalizar</span>
+                    <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1"><Info size={12} /> Valores no WhatsApp</span>
                   </div>
                 </label>
               </div>
             </div>
           )}
 
+          {/* Tamanhos Pronta Entrega (Múltiplos) */}
+          {product.type === "pronta_entrega" && availableSizes.length > 1 && (
+            <div className="mb-5">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Selecione o Tamanho
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.map((sz) => (
+                  <button
+                    key={sz}
+                    onClick={() => setSelectedSize(sz)}
+                    className={`w-12 h-10 rounded-lg font-black text-sm transition-all border-2 ${
+                      selectedSize === sz
+                        ? "bg-blue-900 text-white border-blue-900 shadow-md transform scale-105"
+                        : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                    }`}
+                  >
+                    {sz}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => {
-              if (isEsgotado)
-                return showAlert("Este produto está esgotado no momento.");
+              if (isEsgotado) return showAlert("Este produto está esgotado no momento.");
+              if (product.type === "pronta_entrega" && availableSizes.length > 1 && !selectedSize) {
+                return showAlert("Por favor, selecione um tamanho antes de adicionar ao carrinho.");
+              }
               addToCart(product, wantsPersonalization, selectedSize);
             }}
             disabled={isEsgotado}
             className={`w-full py-3.5 sm:py-4 rounded-xl font-black text-[15px] flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] ${
-              isEsgotado
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
-                : "bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-600 hover:to-blue-800 shadow-blue-900/20"
+              isEsgotado ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-600 hover:to-blue-800 shadow-blue-900/20"
             }`}
           >
-            <ShoppingCart size={20} />{" "}
-            {isEsgotado ? "Indisponível" : "Adicionar ao Carrinho"}
+            <ShoppingCart size={20} /> {isEsgotado ? "Indisponível" : "Adicionar ao Carrinho"}
           </button>
         </div>
       </div>
@@ -357,6 +340,7 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
     name: "",
     team: "",
     size: "M",
+    sizes: { P: 0, M: 0, G: 0, GG: 0, XG: 0, EXG: 0 },
     cost: "",
     price: "",
     stock: "1",
@@ -369,10 +353,18 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
   useEffect(() => {
     if (isOpen) {
       if (productToEdit) {
+        let loadedSizes = { P: 0, M: 0, G: 0, GG: 0, XG: 0, EXG: 0 };
+        if (productToEdit.sizes) {
+          loadedSizes = { ...loadedSizes, ...productToEdit.sizes };
+        } else if (productToEdit.size && productToEdit.stock > 0) {
+          loadedSizes[productToEdit.size] = productToEdit.stock;
+        }
+
         setFormData({
           name: productToEdit.name || "",
           team: productToEdit.team || "",
           size: productToEdit.size || "M",
+          sizes: loadedSizes,
           cost: productToEdit.cost || "",
           price: productToEdit.price || "",
           stock: productToEdit.stock || "1",
@@ -391,14 +383,19 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
       return showAlert("Adicione pelo menos uma imagem do produto.");
     }
 
+    const totalStock = isProntaEntrega ? Object.values(formData.sizes).reduce((acc, val) => acc + (parseInt(val) || 0), 0) : 999;
+    const activeSizes = Object.entries(formData.sizes).filter(([_, qty]) => parseInt(qty) > 0).map(([sz]) => sz);
+    const displaySize = activeSizes.length === 1 ? activeSizes[0] : (activeSizes.length > 1 ? "Vários" : "N/A");
+
     onSave({
       name: formData.name,
       type: type,
       team: formData.team,
-      size: isProntaEntrega ? formData.size : "Variado",
+      size: isProntaEntrega ? displaySize : "Variado",
+      sizes: isProntaEntrega ? formData.sizes : null,
       cost: parseFloat(formData.cost) || 0,
       price: parseFloat(formData.price) || 0,
-      stock: isProntaEntrega ? parseInt(formData.stock, 10) : 999,
+      stock: isProntaEntrega ? totalStock : 999,
       subCategory: formData.subCategory,
       imageUrls: formData.imageUrls,
     }, productToEdit ? productToEdit.id : null);
@@ -428,9 +425,7 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
   const handleMultipleImages = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    if (formData.imageUrls.length + files.length > 5) {
-      return showAlert("Você pode adicionar no máximo 5 imagens por produto.");
-    }
+    if (formData.imageUrls.length + files.length > 5) return showAlert("Você pode adicionar no máximo 5 imagens por produto.");
     setIsCompressing(true);
     const compressedImages = [];
     for (const file of files) {
@@ -439,19 +434,13 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
         compressedImages.push(compressed);
       }
     }
-    setFormData((prev) => ({
-      ...prev,
-      imageUrls: [...prev.imageUrls, ...compressedImages],
-    }));
+    setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...compressedImages] }));
     setIsCompressing(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeImage = (indexToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      imageUrls: prev.imageUrls.filter((_, idx) => idx !== indexToRemove),
-    }));
+    setFormData((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, idx) => idx !== indexToRemove) }));
   };
 
   if (!isOpen) return null;
@@ -459,248 +448,107 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
   return (
     <div className="fixed inset-0 bg-[#0a0f30]/80 flex items-center justify-center z-[100] p-4 sm:p-6 backdrop-blur-md">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col animate-fade-in border border-gray-100">
-        <div
-          className={`p-5 sm:p-6 flex justify-between items-center text-white ${
-            isProntaEntrega
-              ? "bg-gradient-to-r from-blue-800 to-[#0a0f30]"
-              : "bg-gradient-to-r from-amber-600 to-amber-800"
-          }`}
-        >
+        <div className={`p-5 sm:p-6 flex justify-between items-center text-white ${isProntaEntrega ? "bg-gradient-to-r from-blue-800 to-[#0a0f30]" : "bg-gradient-to-r from-amber-600 to-amber-800"}`}>
           <div>
             <h2 className="text-xl font-black flex items-center gap-2">
               <Package size={22} /> {productToEdit ? "Editar Produto" : "Cadastro de Produto"}
             </h2>
-            <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 mt-1 block">
-              Destino: {isProntaEntrega ? "Pronta Entrega" : "Sob Encomenda"}
-            </span>
+            <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 mt-1 block">Destino: {isProntaEntrega ? "Pronta Entrega" : "Sob Encomenda"}</span>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
-          >
-            <X size={20} />
-          </button>
+          <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><X size={20} /></button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-5 sm:p-8 space-y-6 overflow-y-auto"
-        >
-          {/* Sessão de Fotos */}
+        <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-6 overflow-y-auto">
+          {/* FOTOS */}
           <div>
             <div className="flex justify-between items-end mb-2">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Fotos do Produto (Máx 5)
-              </label>
-              <span className="text-xs font-bold text-gray-400">
-                {formData.imageUrls.length}/5
-              </span>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Fotos do Produto (Máx 5)</label>
+              <span className="text-xs font-bold text-gray-400">{formData.imageUrls.length}/5</span>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleMultipleImages}
-            />
+            <input type="file" accept="image/*" multiple ref={fileInputRef} className="hidden" onChange={handleMultipleImages} />
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {formData.imageUrls.map((imgSrc, idx) => (
-                <div
-                  key={idx}
-                  className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm group"
-                >
-                  <img
-                    src={imgSrc}
-                    className="w-full h-full object-cover"
-                    alt={`Preview ${idx + 1}`}
-                  />
+                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm group">
+                  <img src={imgSrc} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
                   <div className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition backdrop-blur-sm">
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="text-white p-2 w-full h-full flex justify-center items-center"
-                    >
-                      <Trash2 size={24} />
-                    </button>
+                    <button type="button" onClick={() => removeImage(idx)} className="text-white p-2 w-full h-full flex justify-center items-center"><Trash2 size={24} /></button>
                   </div>
-                  {idx === 0 && (
-                    <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow">
-                      Capa
-                    </span>
-                  )}
+                  {idx === 0 && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow">Capa</span>}
                 </div>
               ))}
               {formData.imageUrls.length < 5 && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={isCompressing}
-                  className="aspect-square border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-100 hover:border-blue-400 transition hover:text-blue-600 disabled:opacity-50"
-                >
-                  {isCompressing ? (
-                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <ImageIcon size={24} className="mb-1" />
-                      <span className="text-[10px] font-black tracking-wide">
-                        ADICIONAR
-                      </span>
-                    </>
-                  )}
+                <button type="button" onClick={() => fileInputRef.current.click()} disabled={isCompressing} className="aspect-square border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-100 hover:border-blue-400 transition hover:text-blue-600 disabled:opacity-50">
+                  {isCompressing ? <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div> : <><ImageIcon size={24} className="mb-1" /><span className="text-[10px] font-black tracking-wide">ADICIONAR</span></>}
                 </button>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Descrição da Camisa
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Camisa Real Madrid 23/24"
-              className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Descrição da Camisa</label>
+            <input type="text" required placeholder="Ex: Camisa Real Madrid 23/24" className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Time / Seleção
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Ex: Real Madrid"
-                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
-                value={formData.team}
-                onChange={(e) =>
-                  setFormData({ ...formData, team: e.target.value })
-                }
-              />
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Time / Seleção</label>
+              <input type="text" required placeholder="Ex: Real Madrid" className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.team} onChange={(e) => setFormData({ ...formData, team: e.target.value })} />
             </div>
-
-            {/* NOVO CAMPO: CATEGORIAS */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Categoria
-              </label>
-              <select
-                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner appearance-none cursor-pointer"
-                value={formData.subCategory}
-                onChange={(e) =>
-                  setFormData({ ...formData, subCategory: e.target.value })
-                }
-              >
-                {SUBCATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Categoria</label>
+              <select className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner appearance-none cursor-pointer" value={formData.subCategory} onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}>
+                {SUBCATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             {isProntaEntrega ? (
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Tamanho Físico
+              <div className="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner">
+                <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3">
+                  Estoque por Tamanho (Preencha as quantidades)
                 </label>
-                <select
-                  className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner appearance-none cursor-pointer"
-                  value={formData.size}
-                  onChange={(e) =>
-                    setFormData({ ...formData, size: e.target.value })
-                  }
-                >
-                  <option>P</option>
-                  <option>M</option>
-                  <option>G</option>
-                  <option>GG</option>
-                  <option>XG</option>
-                  <option>EXG</option>
-                </select>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Tamanho
-                </label>
-                <div className="w-full rounded-xl bg-amber-50 p-4 border border-amber-200 font-bold text-amber-700 shadow-sm text-sm flex items-center justify-center h-[58px]">
-                  Pelo Cliente
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {['P', 'M', 'G', 'GG', 'XG', 'EXG'].map(sz => (
+                    <div key={sz} className="flex flex-col">
+                      <span className="text-[10px] font-bold text-gray-500 mb-1 text-center">{sz}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full rounded-lg bg-white p-2 border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-center text-gray-900 shadow-sm"
+                        value={formData.sizes[sz]}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          sizes: { ...formData.sizes, [sz]: parseInt(e.target.value) || 0 }
+                        })}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
-            {isProntaEntrega && (
-              <div>
-                <label className="block text-[10px] font-black text-green-600 uppercase tracking-widest mb-2">
-                  Estoque Inicial
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  className="w-full rounded-xl bg-green-50 p-4 border-2 border-green-200 outline-none focus:ring-2 focus:ring-green-600 font-black text-green-700 text-lg shadow-inner"
-                  value={formData.stock}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stock: e.target.value })
-                  }
-                />
+            ) : (
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tamanho</label>
+                <div className="w-full rounded-xl bg-amber-50 p-4 border border-amber-200 font-bold text-amber-700 shadow-sm text-sm flex items-center justify-center h-[58px]">
+                  Escolhido pelo Cliente na Loja
+                </div>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Preço Custo (R$)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
-                value={formData.cost}
-                onChange={(e) =>
-                  setFormData({ ...formData, cost: e.target.value })
-                }
-              />
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Preço Custo (R$)</label>
+              <input type="number" step="0.01" required className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">
-                Preço Venda (R$)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                className="w-full rounded-xl bg-blue-50 p-4 border-2 border-blue-200 outline-none focus:ring-2 focus:ring-blue-600 font-black text-blue-800 shadow-inner"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-              />
+              <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Preço Venda (R$)</label>
+              <input type="number" step="0.01" required className="w-full rounded-xl bg-blue-50 p-4 border-2 border-blue-200 outline-none focus:ring-2 focus:ring-blue-600 font-black text-blue-800 shadow-inner" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
             </div>
           </div>
 
           <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isCompressing}
-              className={`w-full text-white py-4 rounded-xl font-black text-lg transition-all shadow-md active:scale-[0.98] ${
-                isProntaEntrega
-                  ? "bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800"
-                  : "bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700"
-              } ${isCompressing ? "opacity-70 cursor-not-allowed" : ""}`}
-            >
+            <button type="submit" disabled={isCompressing} className={`w-full text-white py-4 rounded-xl font-black text-lg transition-all shadow-md active:scale-[0.98] ${isProntaEntrega ? "bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800" : "bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700"} ${isCompressing ? "opacity-70 cursor-not-allowed" : ""}`}>
               Salvar Produto
             </button>
           </div>
@@ -1395,8 +1243,9 @@ function App() {
   };
 
   const addToCartAction = (product, isPersonalized, selectedSize) => {
-    const finalSize =
-      product.type === "encomenda" ? selectedSize : product.size;
+    // Agora aceita o tamanho selecionado tanto na encomenda quanto na pronta entrega múltipla
+    const finalSize = selectedSize || product.size; 
+    
     // O carrinho agora salva qtd base
     setCart((prev) => [
       ...prev,
@@ -2070,26 +1919,26 @@ function App() {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-[9px] sm:text-[10px] font-black uppercase text-gray-400 mb-1">
-                          Estoque
+                          Estoque Total
                         </span>
-                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                          <button
-                            onClick={() => handleUpdateStock(product.id, -1)}
-                            disabled={product.stock === 0}
-                            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-500 transition disabled:opacity-50"
-                          >
-                            <Minus size={14} strokeWidth={3} />
-                          </button>
-                          <span className="font-black text-base sm:text-lg w-6 sm:w-8 text-center text-blue-900">
-                            {product.stock}
-                          </span>
-                          <button
-                            onClick={() => handleUpdateStock(product.id, 1)}
-                            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
-                          >
-                            <Plus size={14} strokeWidth={3} />
-                          </button>
-                        </div>
+                        {product.sizes && Object.keys(product.sizes).some(k => product.sizes[k] > 0) ? (
+                          <div className="flex flex-wrap gap-1 justify-end max-w-[140px]">
+                            {Object.entries(product.sizes)
+                              .filter(([sz, qty]) => qty > 0)
+                              .map(([sz, qty]) => (
+                                <span key={sz} className="text-[10px] bg-blue-50 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-100">
+                                  {sz}: {qty}
+                                </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                            <button onClick={() => handleUpdateStock(product.id, -1)} disabled={product.stock === 0} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-500 transition disabled:opacity-50"><Minus size={14} strokeWidth={3} /></button>
+                            <span className="font-black text-base sm:text-lg w-6 sm:w-8 text-center text-blue-900">{product.stock}</span>
+                            <button onClick={() => handleUpdateStock(product.id, 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"><Plus size={14} strokeWidth={3} /></button>
+                          </div>
+                        )}
+                      </div>
                       </div>
                     </div>
                   ) : (

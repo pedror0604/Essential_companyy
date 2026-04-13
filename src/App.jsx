@@ -67,6 +67,7 @@ const WHATSAPP_NUMBER = "5541936182744";
 
 // CATEGORIAS DISPONÍVEIS
 const SUBCATEGORIES = ["Retrô", "Europeu", "Brasileiro", "Seleção", "Promoção"];
+
 // --- ÍCONE DO INSTAGRAM CUSTOMIZADO ---
 const InstagramIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -86,6 +87,7 @@ const InstagramIcon = ({ size = 24, className = "" }) => (
     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
   </svg>
 );
+
 // --- LOGO OFICIAL EM SVG ---
 const EssentialLogo = ({ size = 56, light = false }) => (
   <svg
@@ -147,7 +149,7 @@ const EssentialLogo = ({ size = 56, light = false }) => (
   </svg>
 );
 
-// Helper para compatibilidade de dados antigos e novos
+// Helper para compatibilidade de dados
 const getProductImages = (product) => {
   if (product.imageUrls && product.imageUrls.length > 0)
     return product.imageUrls;
@@ -168,16 +170,20 @@ const StoreProductCard = ({
   const [wantsPersonalization, setWantsPersonalization] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
-  // NOVO: Lógica inteligente de múltiplos tamanhos
   const availableSizes = product.sizes
-    ? Object.entries(product.sizes).filter(([sz, qty]) => qty > 0).map(([sz]) => sz)
-    : (product.stock > 0 ? [product.size] : []);
+    ? Object.entries(product.sizes)
+        .filter(([sz, qty]) => qty > 0)
+        .map(([sz]) => sz)
+    : product.stock > 0
+    ? [product.size]
+    : [];
 
-  const isEsgotado = product.type === "pronta_entrega" && product.stock <= 0;
+  const isEsgotado = product.type === "pronta_entrega" && (product.stock <= 0 || availableSizes.length === 0);
 
   const [selectedSize, setSelectedSize] = useState(() => {
     if (product.type === "encomenda") return "M";
-    if (product.type === "pronta_entrega" && availableSizes.length === 1) return availableSizes[0];
+    if (product.type === "pronta_entrega" && availableSizes.length === 1)
+      return availableSizes[0];
     return "";
   });
 
@@ -197,7 +203,6 @@ const StoreProductCard = ({
 
   return (
     <div className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-xl border border-gray-200 overflow-hidden group transition-all duration-300 flex flex-col transform hover:-translate-y-1">
-      {/* Slider de Imagem */}
       <div className="h-64 sm:h-72 w-full bg-gray-100 relative overflow-hidden flex justify-center items-center">
         {images.length > 0 ? (
           <>
@@ -210,11 +215,26 @@ const StoreProductCard = ({
             />
             {images.length > 1 && (
               <>
-                <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"><ChevronLeft size={20} /></button>
-                <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"><ChevronRight size={20} /></button>
+                <button
+                  onClick={prevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md transition-colors z-10 active:scale-95"
+                >
+                  <ChevronRight size={20} />
+                </button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
                   {images.map((_, idx) => (
-                    <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIdx ? "bg-white w-3" : "bg-white/50"}`} />
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        idx === currentImageIdx ? "bg-white w-3" : "bg-white/50"
+                      }`}
+                    />
                   ))}
                 </div>
               </>
@@ -224,7 +244,13 @@ const StoreProductCard = ({
           <Shirt size={60} className="text-gray-300" />
         )}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-          <span className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm text-white w-max ${product.type === "encomenda" ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-green-500 to-emerald-500"}`}>
+          <span
+            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm text-white w-max ${
+              product.type === "encomenda"
+                ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                : "bg-gradient-to-r from-green-500 to-emerald-500"
+            }`}
+          >
             {product.type === "encomenda" ? "Encomenda" : "Pronta Entrega"}
           </span>
           {isEsgotado && (
@@ -235,7 +261,6 @@ const StoreProductCard = ({
         </div>
       </div>
 
-      {/* Conteúdo do Cartão */}
       <div className="p-5 sm:p-6 flex-1 flex flex-col bg-white">
         <div className="flex justify-between items-start mb-3 gap-2">
           <h3 className="font-bold text-gray-900 text-lg leading-tight line-clamp-2">
@@ -256,12 +281,17 @@ const StoreProductCard = ({
             {formatCurrency(product.price)}
           </p>
 
-          {/* Tamanhos Sob Encomenda */}
           {product.type === "encomenda" && (
             <div className="space-y-4 mb-5">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Escolha o Tamanho</label>
-                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                  Escolha o Tamanho
+                </label>
+                <select
+                  value={selectedSize}
+                  onChange={(e) => setSelectedSize(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner"
+                >
                   <option value="P">Tamanho P</option>
                   <option value="M">Tamanho M</option>
                   <option value="G">Tamanho G</option>
@@ -273,21 +303,33 @@ const StoreProductCard = ({
               <div className="bg-amber-50 border border-amber-100 p-3 sm:p-4 rounded-xl transition-all hover:bg-amber-100/50">
                 <label className="flex items-start gap-3 cursor-pointer group/label">
                   <div className="relative flex items-center justify-center mt-0.5">
-                    <input type="checkbox" className="peer sr-only" checked={wantsPersonalization} onChange={(e) => setWantsPersonalization(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={wantsPersonalization}
+                      onChange={(e) => setWantsPersonalization(e.target.checked)}
+                    />
                     <div className="w-5 h-5 rounded bg-white border-2 border-amber-300 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center shadow-sm">
-                      <Check size={14} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                      <Check
+                        size={14}
+                        className="text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                        strokeWidth={3}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">Quero personalizar</span>
-                    <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1"><Info size={12} /> Valores no WhatsApp</span>
+                    <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">
+                      Quero personalizar
+                    </span>
+                    <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1">
+                      <Info size={12} /> Valores no WhatsApp
+                    </span>
                   </div>
                 </label>
               </div>
             </div>
           )}
 
-          {/* Tamanhos Pronta Entrega (Múltiplos) */}
           {product.type === "pronta_entrega" && availableSizes.length > 1 && (
             <div className="mb-5">
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
@@ -313,18 +355,28 @@ const StoreProductCard = ({
 
           <button
             onClick={() => {
-              if (isEsgotado) return showAlert("Este produto está esgotado no momento.");
-              if (product.type === "pronta_entrega" && availableSizes.length > 1 && !selectedSize) {
-                return showAlert("Por favor, selecione um tamanho antes de adicionar ao carrinho.");
+              if (isEsgotado)
+                return showAlert("Este produto está esgotado no momento.");
+              if (
+                product.type === "pronta_entrega" &&
+                availableSizes.length > 1 &&
+                !selectedSize
+              ) {
+                return showAlert(
+                  "Por favor, selecione um tamanho antes de adicionar ao carrinho."
+                );
               }
               addToCart(product, wantsPersonalization, selectedSize);
             }}
             disabled={isEsgotado}
             className={`w-full py-3.5 sm:py-4 rounded-xl font-black text-[15px] flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] ${
-              isEsgotado ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-600 hover:to-blue-800 shadow-blue-900/20"
+              isEsgotado
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+                : "bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-600 hover:to-blue-800 shadow-blue-900/20"
             }`}
           >
-            <ShoppingCart size={20} /> {isEsgotado ? "Indisponível" : "Adicionar ao Carrinho"}
+            <ShoppingCart size={20} />{" "}
+            {isEsgotado ? "Indisponível" : "Adicionar ao Carrinho"}
           </button>
         </div>
       </div>
@@ -332,7 +384,14 @@ const StoreProductCard = ({
   );
 };
 
-const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert }) => {
+const ProductModal = ({
+  isOpen,
+  type,
+  productToEdit,
+  onClose,
+  onSave,
+  showAlert,
+}) => {
   const fileInputRef = useRef(null);
   const isProntaEntrega = type === "pronta_entrega";
 
@@ -383,22 +442,37 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
       return showAlert("Adicione pelo menos uma imagem do produto.");
     }
 
-    const totalStock = isProntaEntrega ? Object.values(formData.sizes).reduce((acc, val) => acc + (parseInt(val) || 0), 0) : 999;
-    const activeSizes = Object.entries(formData.sizes).filter(([_, qty]) => parseInt(qty) > 0).map(([sz]) => sz);
-    const displaySize = activeSizes.length === 1 ? activeSizes[0] : (activeSizes.length > 1 ? "Vários" : "N/A");
+    const totalStock = isProntaEntrega
+      ? Object.values(formData.sizes).reduce(
+          (acc, val) => acc + (parseInt(val) || 0),
+          0
+        )
+      : 999;
+    const activeSizes = Object.entries(formData.sizes)
+      .filter(([_, qty]) => parseInt(qty) > 0)
+      .map(([sz]) => sz);
+    const displaySize =
+      activeSizes.length === 1
+        ? activeSizes[0]
+        : activeSizes.length > 1
+        ? "Vários"
+        : "N/A";
 
-    onSave({
-      name: formData.name,
-      type: type,
-      team: formData.team,
-      size: isProntaEntrega ? displaySize : "Variado",
-      sizes: isProntaEntrega ? formData.sizes : null,
-      cost: parseFloat(formData.cost) || 0,
-      price: parseFloat(formData.price) || 0,
-      stock: isProntaEntrega ? totalStock : 999,
-      subCategory: formData.subCategory,
-      imageUrls: formData.imageUrls,
-    }, productToEdit ? productToEdit.id : null);
+    onSave(
+      {
+        name: formData.name,
+        type: type,
+        team: formData.team,
+        size: isProntaEntrega ? displaySize : "Variado",
+        sizes: isProntaEntrega ? formData.sizes : null,
+        cost: parseFloat(formData.cost) || 0,
+        price: parseFloat(formData.price) || 0,
+        stock: isProntaEntrega ? totalStock : 999,
+        subCategory: formData.subCategory,
+        imageUrls: formData.imageUrls,
+      },
+      productToEdit ? productToEdit.id : null
+    );
   };
 
   const processImageFile = (file) => {
@@ -425,7 +499,10 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
   const handleMultipleImages = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    if (formData.imageUrls.length + files.length > 5) return showAlert("Você pode adicionar no máximo 5 imagens por produto.");
+    if (formData.imageUrls.length + files.length > 5)
+      return showAlert(
+        "Você pode adicionar no máximo 5 imagens por produto."
+      );
     setIsCompressing(true);
     const compressedImages = [];
     for (const file of files) {
@@ -434,13 +511,19 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
         compressedImages.push(compressed);
       }
     }
-    setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...compressedImages] }));
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: [...prev.imageUrls, ...compressedImages],
+    }));
     setIsCompressing(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeImage = (indexToRemove) => {
-    setFormData((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, idx) => idx !== indexToRemove) }));
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, idx) => idx !== indexToRemove),
+    }));
   };
 
   if (!isOpen) return null;
@@ -448,56 +531,149 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
   return (
     <div className="fixed inset-0 bg-[#0a0f30]/80 flex items-center justify-center z-[100] p-4 sm:p-6 backdrop-blur-md">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col animate-fade-in border border-gray-100">
-        <div className={`p-5 sm:p-6 flex justify-between items-center text-white ${isProntaEntrega ? "bg-gradient-to-r from-blue-800 to-[#0a0f30]" : "bg-gradient-to-r from-amber-600 to-amber-800"}`}>
+        <div
+          className={`p-5 sm:p-6 flex justify-between items-center text-white ${
+            isProntaEntrega
+              ? "bg-gradient-to-r from-blue-800 to-[#0a0f30]"
+              : "bg-gradient-to-r from-amber-600 to-amber-800"
+          }`}
+        >
           <div>
             <h2 className="text-xl font-black flex items-center gap-2">
-              <Package size={22} /> {productToEdit ? "Editar Produto" : "Cadastro de Produto"}
+              <Package size={22} />{" "}
+              {productToEdit ? "Editar Produto" : "Cadastro de Produto"}
             </h2>
-            <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 mt-1 block">Destino: {isProntaEntrega ? "Pronta Entrega" : "Sob Encomenda"}</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 mt-1 block">
+              Destino: {isProntaEntrega ? "Pronta Entrega" : "Sob Encomenda"}
+            </span>
           </div>
-          <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><X size={20} /></button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-6 overflow-y-auto">
-          {/* FOTOS */}
+        <form
+          onSubmit={handleSubmit}
+          className="p-5 sm:p-8 space-y-6 overflow-y-auto"
+        >
           <div>
             <div className="flex justify-between items-end mb-2">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Fotos do Produto (Máx 5)</label>
-              <span className="text-xs font-bold text-gray-400">{formData.imageUrls.length}/5</span>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Fotos do Produto (Máx 5)
+              </label>
+              <span className="text-xs font-bold text-gray-400">
+                {formData.imageUrls.length}/5
+              </span>
             </div>
-            <input type="file" accept="image/*" multiple ref={fileInputRef} className="hidden" onChange={handleMultipleImages} />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleMultipleImages}
+            />
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {formData.imageUrls.map((imgSrc, idx) => (
-                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm group">
-                  <img src={imgSrc} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm group"
+                >
+                  <img
+                    src={imgSrc}
+                    className="w-full h-full object-cover"
+                    alt={`Preview ${idx + 1}`}
+                  />
                   <div className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition backdrop-blur-sm">
-                    <button type="button" onClick={() => removeImage(idx)} className="text-white p-2 w-full h-full flex justify-center items-center"><Trash2 size={24} /></button>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="text-white p-2 w-full h-full flex justify-center items-center"
+                    >
+                      <Trash2 size={24} />
+                    </button>
                   </div>
-                  {idx === 0 && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow">Capa</span>}
+                  {idx === 0 && (
+                    <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow">
+                      Capa
+                    </span>
+                  )}
                 </div>
               ))}
               {formData.imageUrls.length < 5 && (
-                <button type="button" onClick={() => fileInputRef.current.click()} disabled={isCompressing} className="aspect-square border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-100 hover:border-blue-400 transition hover:text-blue-600 disabled:opacity-50">
-                  {isCompressing ? <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div> : <><ImageIcon size={24} className="mb-1" /><span className="text-[10px] font-black tracking-wide">ADICIONAR</span></>}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={isCompressing}
+                  className="aspect-square border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-100 hover:border-blue-400 transition hover:text-blue-600 disabled:opacity-50"
+                >
+                  {isCompressing ? (
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <ImageIcon size={24} className="mb-1" />
+                      <span className="text-[10px] font-black tracking-wide">
+                        ADICIONAR
+                      </span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Descrição da Camisa</label>
-            <input type="text" required placeholder="Ex: Camisa Real Madrid 23/24" className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Descrição da Camisa
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Ex: Camisa Real Madrid 23/24"
+              className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Time / Seleção</label>
-              <input type="text" required placeholder="Ex: Real Madrid" className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.team} onChange={(e) => setFormData({ ...formData, team: e.target.value })} />
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Time / Seleção
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Ex: Real Madrid"
+                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
+                value={formData.team}
+                onChange={(e) =>
+                  setFormData({ ...formData, team: e.target.value })
+                }
+              />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Categoria</label>
-              <select className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner appearance-none cursor-pointer" value={formData.subCategory} onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}>
-                {SUBCATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Categoria
+              </label>
+              <select
+                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner appearance-none cursor-pointer"
+                value={formData.subCategory}
+                onChange={(e) =>
+                  setFormData({ ...formData, subCategory: e.target.value })
+                }
+              >
+                {SUBCATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -509,18 +685,25 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
                   Estoque por Tamanho (Preencha as quantidades)
                 </label>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {['P', 'M', 'G', 'GG', 'XG', 'EXG'].map(sz => (
+                  {["P", "M", "G", "GG", "XG", "EXG"].map((sz) => (
                     <div key={sz} className="flex flex-col">
-                      <span className="text-[10px] font-bold text-gray-500 mb-1 text-center">{sz}</span>
+                      <span className="text-[10px] font-bold text-gray-500 mb-1 text-center">
+                        {sz}
+                      </span>
                       <input
                         type="number"
                         min="0"
                         className="w-full rounded-lg bg-white p-2 border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-center text-gray-900 shadow-sm"
                         value={formData.sizes[sz]}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          sizes: { ...formData.sizes, [sz]: parseInt(e.target.value) || 0 }
-                        })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sizes: {
+                              ...formData.sizes,
+                              [sz]: parseInt(e.target.value) || 0,
+                            },
+                          })
+                        }
                       />
                     </div>
                   ))}
@@ -528,7 +711,9 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
               </div>
             ) : (
               <div className="col-span-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tamanho</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  Tamanho
+                </label>
                 <div className="w-full rounded-xl bg-amber-50 p-4 border border-amber-200 font-bold text-amber-700 shadow-sm text-sm flex items-center justify-center h-[58px]">
                   Escolhido pelo Cliente na Loja
                 </div>
@@ -538,17 +723,47 @@ const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert 
 
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Preço Custo (R$)</label>
-              <input type="number" step="0.01" required className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} />
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Preço Custo (R$)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                className="w-full rounded-xl bg-gray-50 p-4 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 shadow-inner"
+                value={formData.cost}
+                onChange={(e) =>
+                  setFormData({ ...formData, cost: e.target.value })
+                }
+              />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Preço Venda (R$)</label>
-              <input type="number" step="0.01" required className="w-full rounded-xl bg-blue-50 p-4 border-2 border-blue-200 outline-none focus:ring-2 focus:ring-blue-600 font-black text-blue-800 shadow-inner" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
+              <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">
+                Preço Venda (R$)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                className="w-full rounded-xl bg-blue-50 p-4 border-2 border-blue-200 outline-none focus:ring-2 focus:ring-blue-600 font-black text-blue-800 shadow-inner"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
+              />
             </div>
           </div>
 
           <div className="pt-2">
-            <button type="submit" disabled={isCompressing} className={`w-full text-white py-4 rounded-xl font-black text-lg transition-all shadow-md active:scale-[0.98] ${isProntaEntrega ? "bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800" : "bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700"} ${isCompressing ? "opacity-70 cursor-not-allowed" : ""}`}>
+            <button
+              type="submit"
+              disabled={isCompressing}
+              className={`w-full text-white py-4 rounded-xl font-black text-lg transition-all shadow-md active:scale-[0.98] ${
+                isProntaEntrega
+                  ? "bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-600 hover:to-blue-800"
+                  : "bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700"
+              } ${isCompressing ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
               Salvar Produto
             </button>
           </div>
@@ -862,7 +1077,6 @@ const CartDrawer = ({
 }) => {
   if (!isOpen) return null;
 
-  // Modificado: Calcular total considerando a quantidade
   const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
   const hasPers = cart.some((item) => item.isPersonalized);
 
@@ -933,7 +1147,6 @@ const CartDrawer = ({
                       {item.type === "encomenda" ? "ENCOMENDA" : "P. ENTREGA"}
                     </p>
 
-                    {/* NOVO: CONTROLE DE QUANTIDADE (+ e -) */}
                     <div className="flex justify-between items-center mt-1">
                       <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-1">
                         <button
@@ -1035,13 +1248,10 @@ function App() {
     onConfirm: null,
   });
 
-  // Lógica da Loja (Pesquisa e Filtros)
   const [currentBanner, setCurrentBanner] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("pronta_entrega");
-  const [activeSubCategory, setActiveSubCategory] = useState("Todos"); // Novo filtro da loja
-
-  // Lógica de pesquisa no Admin
+  const [activeSubCategory, setActiveSubCategory] = useState("Todos");
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
 
   const formatCurrency = (value) =>
@@ -1178,7 +1388,7 @@ function App() {
     [products]
   );
 
- const handleSaveDoc = async (collectionName, data, docId = null) => {
+  const handleSaveDoc = async (collectionName, data, docId = null) => {
     if (!user)
       return showAlert(
         "O sistema ainda está se conectando. Aguarde um segundo e tente novamente."
@@ -1243,10 +1453,7 @@ function App() {
   };
 
   const addToCartAction = (product, isPersonalized, selectedSize) => {
-    // Agora aceita o tamanho selecionado tanto na encomenda quanto na pronta entrega múltipla
-    const finalSize = selectedSize || product.size; 
-    
-    // O carrinho agora salva qtd base
+    const finalSize = selectedSize || product.size;
     setCart((prev) => [
       ...prev,
       {
@@ -1264,13 +1471,12 @@ function App() {
     setCart((prev) => prev.filter((item) => item.cartId !== cartId));
   };
 
-  // NOVA FUNÇÃO: Atualizar quantidade no carrinho
   const updateCartQty = (cartId, delta) => {
     setCart((prev) =>
       prev.map((item) => {
         if (item.cartId === cartId) {
           const newQty = item.qty + delta;
-          if (newQty < 1) return item; // Nao deixa baixar de 1. (Usa a lixeira para remover)
+          if (newQty < 1) return item;
           return { ...item, qty: newQty };
         }
         return item;
@@ -1286,7 +1492,7 @@ function App() {
     let hasPers = false;
 
     cart.forEach((item) => {
-      const itemTotal = item.price * item.qty; // Multiplica pela quantidade!
+      const itemTotal = item.price * item.qty;
       total += itemTotal;
       const tipo =
         item.type === "encomenda" ? "Sob Encomenda" : "Pronta Entrega";
@@ -1308,10 +1514,6 @@ function App() {
     setIsCartOpen(false);
   };
 
-  // ==============================
-  // FUNÇÕES DE RENDERIZAÇÃO DE ECRÃS
-  // ==============================
-
   const renderStoreFront = () => {
     const filteredProducts = products.filter((p) => {
       const matchesSearch =
@@ -1325,7 +1527,6 @@ function App() {
 
     return (
       <div className="flex-1 flex flex-col animate-fade-in w-full relative z-10 bg-[#f8fafc]">
-        {/* Banners Hero */}
         {banners.length > 0 && (
           <div className="relative w-full h-[35vh] sm:h-[45vh] md:h-[65vh] bg-[#05071a] overflow-hidden">
             {banners.map((banner, idx) => (
@@ -1420,7 +1621,6 @@ function App() {
             </div>
           </div>
 
-          {/* NOVO: BOTÕES DE SUBCATEGORIAS */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1">
             {["Todos", ...SUBCATEGORIES].map((cat) => (
               <button
@@ -1779,7 +1979,6 @@ function App() {
   const renderInventory = (filterType) => {
     const isProntaEntrega = filterType === "pronta_entrega";
 
-    // NOVO: Filtrar com base na pesquisa dentro do Admin
     const filteredProducts = products.filter(
       (p) =>
         p.type === filterType &&
@@ -1801,7 +2000,6 @@ function App() {
             </p>
           </div>
 
-          {/* NOVA LUPA: Pesquisa no inventário admin */}
           <div className="relative w-full md:w-80 flex-shrink-0">
             <Search
               className="absolute left-4 top-3.5 text-gray-400"
@@ -1875,7 +2073,6 @@ function App() {
                       <ImageIcon size={12} /> {images.length} fotos
                     </div>
                   )}
-                  {/* NOVO: Tag da categoria no card do admin */}
                   {product.subCategory && (
                     <div className="absolute bottom-2 right-2 bg-blue-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-md">
                       {product.subCategory}
@@ -1921,24 +2118,42 @@ function App() {
                         <span className="text-[9px] sm:text-[10px] font-black uppercase text-gray-400 mb-1">
                           Estoque Total
                         </span>
-                        {product.sizes && Object.keys(product.sizes).some(k => product.sizes[k] > 0) ? (
+                        {product.sizes &&
+                        Object.keys(product.sizes).some(
+                          (k) => product.sizes[k] > 0
+                        ) ? (
                           <div className="flex flex-wrap gap-1 justify-end max-w-[140px]">
                             {Object.entries(product.sizes)
                               .filter(([sz, qty]) => qty > 0)
                               .map(([sz, qty]) => (
-                                <span key={sz} className="text-[10px] bg-blue-50 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-100">
+                                <span
+                                  key={sz}
+                                  className="text-[10px] bg-blue-50 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-100"
+                                >
                                   {sz}: {qty}
                                 </span>
-                            ))}
+                              ))}
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                            <button onClick={() => handleUpdateStock(product.id, -1)} disabled={product.stock === 0} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-500 transition disabled:opacity-50"><Minus size={14} strokeWidth={3} /></button>
-                            <span className="font-black text-base sm:text-lg w-6 sm:w-8 text-center text-blue-900">{product.stock}</span>
-                            <button onClick={() => handleUpdateStock(product.id, 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"><Plus size={14} strokeWidth={3} /></button>
+                            <button
+                              onClick={() => handleUpdateStock(product.id, -1)}
+                              disabled={product.stock === 0}
+                              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-500 transition disabled:opacity-50"
+                            >
+                              <Minus size={14} strokeWidth={3} />
+                            </button>
+                            <span className="font-black text-base sm:text-lg w-6 sm:w-8 text-center text-blue-900">
+                              {product.stock}
+                            </span>
+                            <button
+                              onClick={() => handleUpdateStock(product.id, 1)}
+                              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                            >
+                              <Plus size={14} strokeWidth={3} />
+                            </button>
                           </div>
                         )}
-                      </div>
                       </div>
                     </div>
                   ) : (
@@ -2122,7 +2337,6 @@ function App() {
     </div>
   );
 
-  // --- RENDERIZAÇÃO LOGIN
   if (currentView === "admin_login" && !isLogged) {
     return (
       <div className="min-h-screen bg-[#05071a] flex items-center justify-center p-4 relative overflow-hidden font-sans">
@@ -2193,7 +2407,6 @@ function App() {
     );
   }
 
-  // --- RENDERIZAÇÃO GERAL DA APP
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans relative overflow-x-hidden">
       <style
@@ -2208,7 +2421,6 @@ function App() {
         }}
       />
 
-      {/* TOP BAR - DESTAQUE ENTREGAS */}
       <div className="w-full bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-blue-50 py-2 px-4 flex justify-center items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-black uppercase tracking-widest z-50 relative border-b border-blue-950 shadow-sm">
         <Truck size={16} className="text-blue-300 sm:w-[18px] sm:h-[18px]" />
         <span>
@@ -2366,7 +2578,6 @@ function App() {
         </main>
       )}
 
-      {/* MODAIS GLOBAIS */}
       <ProductModal
         isOpen={isProductModalOpen !== false}
         type={
@@ -2416,7 +2627,7 @@ function App() {
         onClose={() => setIsCartOpen(false)}
         cart={cart}
         removeFromCart={removeFromCart}
-        updateCartQty={updateCartQty} // Nova prop passada para o Carrinho
+        updateCartQty={updateCartQty}
         finishOrderWhatsApp={finishOrderWhatsApp}
         formatCurrency={formatCurrency}
       />

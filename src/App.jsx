@@ -29,6 +29,7 @@ import {
   Search,
   MapPin,
   Truck,
+  Edit,
 } from "lucide-react";
 import { initializeApp } from "firebase/app";
 import {
@@ -348,7 +349,7 @@ const StoreProductCard = ({
   );
 };
 
-const ProductModal = ({ isOpen, type, onClose, onSave, showAlert }) => {
+const ProductModal = ({ isOpen, type, productToEdit, onClose, onSave, showAlert }) => {
   const fileInputRef = useRef(null);
   const isProntaEntrega = type === "pronta_entrega";
 
@@ -366,8 +367,23 @@ const ProductModal = ({ isOpen, type, onClose, onSave, showAlert }) => {
   const [isCompressing, setIsCompressing] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setFormData(initialFormState);
-  }, [isOpen, type]);
+    if (isOpen) {
+      if (productToEdit) {
+        setFormData({
+          name: productToEdit.name || "",
+          team: productToEdit.team || "",
+          size: productToEdit.size || "M",
+          cost: productToEdit.cost || "",
+          price: productToEdit.price || "",
+          stock: productToEdit.stock || "1",
+          subCategory: productToEdit.subCategory || "Europeu",
+          imageUrls: getProductImages(productToEdit),
+        });
+      } else {
+        setFormData(initialFormState);
+      }
+    }
+  }, [isOpen, type, productToEdit]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -383,9 +399,9 @@ const ProductModal = ({ isOpen, type, onClose, onSave, showAlert }) => {
       cost: parseFloat(formData.cost) || 0,
       price: parseFloat(formData.price) || 0,
       stock: isProntaEntrega ? parseInt(formData.stock, 10) : 999,
-      subCategory: formData.subCategory, // Nova funcionalidade: Categoria
+      subCategory: formData.subCategory,
       imageUrls: formData.imageUrls,
-    });
+    }, productToEdit ? productToEdit.id : null);
   };
 
   const processImageFile = (file) => {
@@ -452,7 +468,7 @@ const ProductModal = ({ isOpen, type, onClose, onSave, showAlert }) => {
         >
           <div>
             <h2 className="text-xl font-black flex items-center gap-2">
-              <Package size={22} /> Cadastro de Produto
+              <Package size={22} /> {productToEdit ? "Editar Produto" : "Cadastro de Produto"}
             </h2>
             <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 mt-1 block">
               Destino: {isProntaEntrega ? "Pronta Entrega" : "Sob Encomenda"}
@@ -1161,6 +1177,7 @@ function App() {
 
   const [activeAdminTab, setActiveAdminTab] = useState("dashboard");
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [dialog, setDialog] = useState({
@@ -1313,15 +1330,15 @@ function App() {
     [products]
   );
 
-  const handleSaveDoc = async (collectionName, data) => {
+ const handleSaveDoc = async (collectionName, data, docId = null) => {
     if (!user)
       return showAlert(
         "O sistema ainda está se conectando. Aguarde um segundo e tente novamente."
       );
     try {
-      const docId = Date.now().toString();
+      const finalId = docId || Date.now().toString();
       await setDoc(
-        doc(db, "artifacts", appId, "public", "data", collectionName, docId),
+        doc(db, "artifacts", appId, "public", "data", collectionName, finalId),
         data
       );
     } catch (error) {
@@ -1968,18 +1985,29 @@ function App() {
                 key={product.id}
                 className="bg-white rounded-3xl shadow-sm hover:shadow-xl border border-gray-200 overflow-hidden flex flex-col relative group transition-all duration-300"
               >
-                <button
-                  onClick={() =>
-                    handleDeleteDoc(
-                      "products",
-                      product.id,
-                      "Tem certeza que deseja excluir este produto?"
-                    )
-                  }
-                  className="absolute top-3 right-3 z-10 p-2.5 bg-white/90 text-gray-400 hover:text-white hover:bg-red-500 rounded-xl shadow-md sm:opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="absolute top-3 right-3 z-10 flex gap-2 sm:opacity-0 group-hover:opacity-100 transition-all">
+                  <button
+                    onClick={() => {
+                      setEditingProduct(product);
+                      setIsProductModalOpen(filterType);
+                    }}
+                    className="p-2.5 bg-white/90 text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl shadow-md backdrop-blur-sm transition-all"
+                  >
+                    <Edit size={18} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleDeleteDoc(
+                        "products",
+                        product.id,
+                        "Tem certeza que deseja excluir este produto?"
+                      )
+                    }
+                    className="p-2.5 bg-white/90 text-gray-400 hover:text-white hover:bg-red-500 rounded-xl shadow-md backdrop-blur-sm transition-all"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
                 <div className="h-48 sm:h-56 bg-gray-100 relative flex items-center justify-center border-b border-gray-100">
                   {thumbUrl ? (
                     <img
@@ -2497,10 +2525,15 @@ function App() {
             ? isProductModalOpen
             : "pronta_entrega"
         }
-        onClose={() => setIsProductModalOpen(false)}
-        onSave={(data) => {
-          handleSaveDoc("products", data);
+        productToEdit={editingProduct}
+        onClose={() => {
           setIsProductModalOpen(false);
+          setEditingProduct(null);
+        }}
+        onSave={(data, id) => {
+          handleSaveDoc("products", data, id);
+          setIsProductModalOpen(false);
+          setEditingProduct(null);
         }}
         showAlert={showAlert}
       />

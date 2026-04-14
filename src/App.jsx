@@ -66,7 +66,7 @@ const appId = "essential-company-app";
 const WHATSAPP_NUMBER = "5541936182744";
 
 // CATEGORIAS DISPONÍVEIS
-const SUBCATEGORIES = ["Retrô", "Europeu", "Brasileiro", "Seleção", "Promoção"];
+const SUBCATEGORIES = ["Retrô", "Europeu", "Brasileiro", "Seleção", "Promoção", "Jogador", "Outros"];
 
 // --- ÍCONE DO INSTAGRAM CUSTOMIZADO ---
 const InstagramIcon = ({ size = 24, className = "" }) => (

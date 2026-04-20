@@ -442,32 +442,47 @@ const ProductModal = ({
       return showAlert("Adicione pelo menos uma imagem do produto.");
     }
 
-    const totalStock = isProntaEntrega
+    let totalStock = isProntaEntrega
       ? Object.values(formData.sizes).reduce(
           (acc, val) => acc + (parseInt(val) || 0),
           0
         )
       : 999;
+      
     const activeSizes = Object.entries(formData.sizes)
       .filter(([_, qty]) => parseInt(qty) > 0)
       .map(([sz]) => sz);
-    const displaySize =
+      
+    let displaySize =
       activeSizes.length === 1
         ? activeSizes[0]
         : activeSizes.length > 1
         ? "Vários"
         : "N/A";
 
+    // --- NOVA LÓGICA: Se zerar o estoque na hora de salvar, vira encomenda! ---
+    let finalType = type;
+    let finalSize = isProntaEntrega ? displaySize : "Variado";
+    let finalSizes = isProntaEntrega ? formData.sizes : null;
+    let finalStock = isProntaEntrega ? totalStock : 999;
+
+    if (isProntaEntrega && totalStock === 0) {
+      finalType = "encomenda";
+      finalSize = "Variado";
+      finalSizes = null;
+      finalStock = 999;
+    }
+
     onSave(
       {
         name: formData.name,
-        type: type,
+        type: finalType,
         team: formData.team,
-        size: isProntaEntrega ? displaySize : "Variado",
-        sizes: isProntaEntrega ? formData.sizes : null,
+        size: finalSize,
+        sizes: finalSizes,
         cost: parseFloat(formData.cost) || 0,
         price: parseFloat(formData.price) || 0,
-        stock: isProntaEntrega ? totalStock : 999,
+        stock: finalStock,
         subCategory: formData.subCategory,
         imageUrls: formData.imageUrls,
       },
@@ -1306,7 +1321,22 @@ function App() {
       productsRef,
       (snapshot) => {
         setProducts(
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+          snapshot.docs.map((doc) => {
+            let data = doc.data();
+            
+            // --- NOVA LÓGICA: Auto-Conversão para Encomenda ---
+            // Se o produto for pronta entrega, mas o estoque for 0 (e não tiver tamanhos preenchidos), ele já assume como encomenda
+            if (data.type === "pronta_entrega") {
+              const hasSizes = data.sizes ? Object.values(data.sizes).some(qty => qty > 0) : false;
+              if (data.stock <= 0 && !hasSizes) {
+                data.type = "encomenda";
+                data.size = "Variado";
+                data.stock = 999;
+              }
+            }
+
+            return { id: doc.id, ...data };
+          })
         );
         setIsLoading(false);
       },
@@ -1423,9 +1453,20 @@ function App() {
     const product = products.find((p) => p.id === id);
     if (!product) return;
     try {
+      let newStock = Math.max(0, product.stock + change);
+      let updates = { stock: newStock };
+
+      // --- NOVA LÓGICA: Se o estoque bater em 0 pelo botão ' - ', vira encomenda ---
+      if (newStock === 0 && product.type === "pronta_entrega") {
+        updates.type = "encomenda";
+        updates.size = "Variado";
+        updates.sizes = null;
+        updates.stock = 999;
+      }
+
       await setDoc(
         doc(db, "artifacts", appId, "public", "data", "products", id),
-        { ...product, stock: Math.max(0, product.stock + change) }
+        { ...product, ...updates }
       );
     } catch (error) {
       console.error("Erro ao atualizar estoque:", error);

@@ -281,57 +281,30 @@ const StoreProductCard = ({
             {formatCurrency(product.price)}
           </p>
 
+          {/* Tamanhos Sob Encomenda */}
           {product.type === "encomenda" && (
-            <div className="space-y-4 mb-5">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  Escolha o Tamanho
-                </label>
-                <select
-                  value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner"
-                >
-                  <option value="P">Tamanho P</option>
-                  <option value="M">Tamanho M</option>
-                  <option value="G">Tamanho G</option>
-                  <option value="GG">Tamanho GG</option>
-                  <option value="XG">Tamanho XG</option>
-                  <option value="EXG">Tamanho EXG</option>
-                </select>
-              </div>
-              <div className="bg-amber-50 border border-amber-100 p-3 sm:p-4 rounded-xl transition-all hover:bg-amber-100/50">
-                <label className="flex items-start gap-3 cursor-pointer group/label">
-                  <div className="relative flex items-center justify-center mt-0.5">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={wantsPersonalization}
-                      onChange={(e) => setWantsPersonalization(e.target.checked)}
-                    />
-                    <div className="w-5 h-5 rounded bg-white border-2 border-amber-300 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center shadow-sm">
-                      <Check
-                        size={14}
-                        className="text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                        strokeWidth={3}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">
-                      Quero personalizar
-                    </span>
-                    <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1">
-                      <Info size={12} /> Valores no WhatsApp
-                    </span>
-                  </div>
-                </label>
-              </div>
+            <div className="mb-4">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
+                Escolha o Tamanho
+              </label>
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-xl p-3 sm:p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow cursor-pointer appearance-none shadow-inner"
+              >
+                <option value="P">Tamanho P</option>
+                <option value="M">Tamanho M</option>
+                <option value="G">Tamanho G</option>
+                <option value="GG">Tamanho GG</option>
+                <option value="XG">Tamanho XG</option>
+                <option value="EXG">Tamanho EXG</option>
+              </select>
             </div>
           )}
 
+          {/* Tamanhos Pronta Entrega (Múltiplos) */}
           {product.type === "pronta_entrega" && availableSizes.length > 1 && (
-            <div className="mb-5">
+            <div className="mb-4">
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
                 Selecione o Tamanho
               </label>
@@ -352,6 +325,35 @@ const StoreProductCard = ({
               </div>
             </div>
           )}
+
+          {/* Personalização disponível para TODOS os produtos */}
+          <div className="bg-amber-50 border border-amber-100 p-3 sm:p-4 rounded-xl transition-all hover:bg-amber-100/50 mb-5">
+            <label className="flex items-start gap-3 cursor-pointer group/label">
+              <div className="relative flex items-center justify-center mt-0.5">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={wantsPersonalization}
+                  onChange={(e) => setWantsPersonalization(e.target.checked)}
+                />
+                <div className="w-5 h-5 rounded bg-white border-2 border-amber-300 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center shadow-sm">
+                  <Check
+                    size={14}
+                    className="text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                    strokeWidth={3}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-amber-900 group-hover/label:text-amber-700 transition-colors">
+                  Quero personalizar
+                </span>
+                <span className="text-xs text-amber-600/80 mt-0.5 leading-tight flex items-center gap-1">
+                  <Info size={12} /> Valores no WhatsApp
+                </span>
+              </div>
+            </label>
+          </div>
 
           <button
             onClick={() => {
@@ -1618,6 +1620,28 @@ function App() {
         )}
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6 sm:space-y-8 relative">
+          
+          {/* BANNER CHAMADA WHATSAPP */}
+          <div className="bg-gradient-to-r from-[#25D366] to-[#1DA851] rounded-2xl p-5 sm:p-6 shadow-md flex flex-col md:flex-row items-center justify-between gap-5 text-white z-20 relative">
+            <div className="flex items-center gap-4 text-center md:text-left">
+              <div className="bg-white/20 p-3 rounded-full hidden sm:block">
+                <MessageCircle size={32} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-black text-lg sm:text-xl leading-tight mb-1">Não encontrou o modelo que procurava?</h3>
+                <p className="text-sm sm:text-base font-medium text-white/90">Trabalhamos com encomendas de times do mundo todo!</p>
+              </div>
+            </div>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá! Dei uma olhada no site, mas não encontrei a camisa que eu queria. Vocês conseguem encomendar?")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full md:w-auto text-center px-6 py-3.5 bg-white text-[#1DA851] font-black rounded-xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap flex justify-center items-center gap-2"
+            >
+              <MessageCircle size={20} /> Chamar no WhatsApp
+            </a>
+          </div>
+
           <div className="bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-center relative z-20">
             <div className="flex bg-gray-50 p-1.5 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar border border-gray-100">
               <button
